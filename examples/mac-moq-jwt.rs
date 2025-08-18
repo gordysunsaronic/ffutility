@@ -32,7 +32,7 @@ async fn main() -> Result<()> {
         .init();
     
     let mut tls = moq_native::client::ClientTls::default();
-    tls.disable_verify = Some(true);
+    tls.disable_verify = Some(false);
 
     let quic_client = client::Client::new(client::ClientConfig {
         bind: SocketAddr::from(([0, 0, 0, 0], 0)),
@@ -45,11 +45,7 @@ async fn main() -> Result<()> {
     // NOTE: You can now start producing a broadcast even when the session is severed
     let broadcast: hang::BroadcastProducer = hang::BroadcastProducer::new();
 
-    let mut token = std::fs::read_to_string("/Users/Gordy.Sun/moq/rs/dev/bum-unified.jwt")?
-        .trim()
-        .to_string();
-
-    let url = Url::parse(&format!("https://127.0.0.1:4443/bum/?jwt={}", token))?;
+    let url = Url::parse("https://gordy-ssh.sim.fleet.saronicsw.com:4443/xyz/")?;
 
     // Perform the web_transport handshake.
     let session: web_transport_quinn::Session = quic_client.connect(url).await?;

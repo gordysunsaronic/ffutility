@@ -69,31 +69,34 @@ impl V4lH264Stream {
         let (tx, rx) = mpsc::channel::<BytesMut>(10);
 
         std::thread::spawn(move || {
-            // Detect input type and fourcc from the device
-            let (input_type, detected_fourcc) = cfg.detect_input_type()
-                .expect("failed to detect input type from V4L device");
-            
-            tracing::info!("detected fourcc: {}, input type: {:?}", detected_fourcc, input_type);
-
             // TODO: better error handling, should close the channel correctly instead of exploding
-            loop {
+            let (input_type, detected_fourcc) = loop {
                 // block until the v4l_device is up
                 let v4l_dev = Device::with_path(&cfg.video_dev)
                     .expect("Failed to open v4l device. Device may not exist.");
-                let formats = v4l_dev.enum_formats().expect("Failed to get v4l formats.");
+                
+                // Detect input type and fourcc from this specific device
+                match cfg.detect_input_type() {
+                    Ok((input_type, detected_fourcc)) => {
+                        let formats = v4l_dev.enum_formats().expect("Failed to get v4l formats.");
+                        tracing::trace!("{} got formats: {:?}", &cfg.video_dev.as_str(), formats);
 
-                tracing::trace!("{} got formats: {:?}", &cfg.video_dev.as_str(), formats);
-
-                if !formats.iter().any(|fmt| {
-                    fmt.fourcc == detected_fourcc
-                }) {
-                    tracing::error!("{} doesn't have detected FourCC {}!", &cfg.video_dev.as_str(), detected_fourcc);
-                    std::thread::sleep(std::time::Duration::from_secs(1));
-                } else {
-                    tracing::info!("{} has detected FourCC {}!", &cfg.video_dev.as_str(), detected_fourcc);
-                    break;
+                        if !formats.iter().any(|fmt| {
+                            fmt.fourcc == detected_fourcc
+                        }) {
+                            tracing::error!("{} doesn't have detected FourCC {}!", &cfg.video_dev.as_str(), detected_fourcc);
+                            std::thread::sleep(std::time::Duration::from_secs(1));
+                        } else {
+                            tracing::info!("{} detected fourcc: {}, input type: {:?}", &cfg.video_dev, detected_fourcc, input_type);
+                            break (input_type, detected_fourcc);
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!("{} failed to detect input type: {}", &cfg.video_dev, e);
+                        std::thread::sleep(std::time::Duration::from_secs(1));
+                    }
                 }
-            }
+            };
 
 
             let video_dev = Device::with_path(&cfg.video_dev).unwrap();
