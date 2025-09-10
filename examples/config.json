@@ -1,0 +1,23 @@
+{
+  "camera_groups": [
+    {
+      "cameras": [
+        {"name": "port", "video_dev": "/dev/video20"},
+        {"name": "stbd", "video_dev": "/dev/video21"}
+      ],
+      "default": "eo-port",
+      "name": "eo"
+    },
+    {
+      "cameras": [
+        {"name": "port-bug", "video_dev": "/dev/video8"},
+        {"name": "stbd-bug", "video_dev": "/dev/video9"},
+        {"name": "stbd-straw", "video_dev": "/dev/video7"},
+        {"name": "port-straw", "video_dev": "/dev/video6"}
+      ],
+      "default": "ir-port-straw",
+      "name": "ir"
+    }
+  ],
+  "relay_server": "https://gordy-ssh.sim.fleet.saronicsw.com:4443/"
+}
